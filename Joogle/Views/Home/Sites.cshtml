@@ -1,0 +1,49 @@
+﻿@model Joogle.Response.SitesResponse
+
+<h1>Список заявок</h1>
+
+<p>
+    @Html.ActionLink("Добавить сайт", "Create")
+</p>
+
+<table class="table">
+    <tr>
+        <th>
+            Адрес сайта
+        </th>
+        <th>
+            Обработан
+        </th>
+        <th>
+            Удален
+        </th>
+        <th>
+            Дата изменения
+        </th>
+        <th>Изменить</th>
+        <th>Удалить</th>
+    </tr>
+    @foreach (var site in Model.Sites)
+    {
+    <tr>
+        <td>
+            @Html.DisplayFor(model => site.Url, new { htmlAttributes = new { @class = "col-md-6" } })
+        </td>
+        <td>
+            @Html.DisplayFor(appsItem => site.IsParsed, new { htmlAttributes = new { @class = "col-md-1" } })
+        </td>
+        <td>
+            @Html.DisplayFor(appsItem => site.IsDeleted, new { htmlAttributes = new { @class = "col-md-1" } })
+        </td>
+        <td>
+            @Html.DisplayFor(appsItem => site.DateModify, new { htmlAttributes = new { @class = "col-md-3" } })
+        </td>
+        <td>
+            @Html.ActionLink("Изменить", "Edit", new { id = site.Id })
+        </td>
+        <td>
+            @Html.ActionLink("Удалить", "Delete", new { id = site.Id })
+        </td>
+    </tr>
+    }
+</table>
