@@ -149,6 +149,8 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\PagingHelpers.cs" />
+    <Compile Include="Models\PageInfo.cs" />
     <Compile Include="Models\Site.cs" />
     <Compile Include="Models\Text.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -159,6 +161,10 @@
     <Compile Include="Services\JoogleService.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="App_Data\DataJoogle.mdf" />
+    <Content Include="App_Data\DataJoogle_log.ldf">
+      <DependentUpon>DataJoogle.mdf</DependentUpon>
+    </Content>
     <Content Include="Content\bootstrap-theme.css" />
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
@@ -195,10 +201,9 @@
     <Content Include="Views\Home\Parser.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Home\Create.cshtml" />
+    <Content Include="Views\Home\Search.cshtml" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="App_Data\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff2" />
     <Content Include="fonts\glyphicons-halflings-regular.woff" />

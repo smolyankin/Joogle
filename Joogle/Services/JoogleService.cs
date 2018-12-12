@@ -104,14 +104,17 @@ namespace Joogle.Services
         /// получить список текстов
         /// </summary>
         /// <param name="search">поисковый запрос</param>
-        public async Task<TextsResponse> Search(string search, int skip = 0, int count = 20)
+        public async Task<TextsResponse> Search(TextsResponse model, PageInfo pageInfo)
         {
-            var texts = db.Texts.Where(x => x.Title.Contains(search));
-            var model = new TextsResponse
-            {
-                Search = search,
-                Texts = texts.Skip(skip).Take(count).ToList()
-            };
+            var texts = db.Texts.Where(x => x.Title.Contains(model.Search)).OrderByDescending(x => x.DateModify).Skip((pageInfo.PageNumber - 1) * pageInfo.PageSize).Take(pageInfo.PageSize).ToList();
+            var countPages = db.Texts.Where(x => x.Title.Contains(model.Search)).Count();
+            model.Search = model.Search;
+            model.Texts = texts;
+            var oldTotalItems = model.PageInfo.TotalItems;
+            model.PageInfo.TotalItems = countPages;
+            if (model.SearchOld != model.Search)
+                model.PageInfo.PageNumber = 1;
+            //model.PageInfo.PageNumber = model.SearchOld == model.Search ? model.PageInfo.PageNumber : 1;
 
             return model;
         }
