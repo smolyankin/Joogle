@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Joogle.Context;
 using System.Data;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
+using AngleSharp;
 using AngleSharp.Dom.Html;
 using AngleSharp.Extensions;
 using AngleSharp.Parser.Html;
@@ -101,13 +104,13 @@ namespace Joogle.Services
         /// получить список текстов
         /// </summary>
         /// <param name="search">поисковый запрос</param>
-        public async Task<TextsResponse> Search(string search)
+        public async Task<TextsResponse> Search(string search, int skip = 0, int count = 20)
         {
             var texts = db.Texts.Where(x => x.Title.Contains(search));
             var model = new TextsResponse
             {
                 Search = search,
-                Texts = texts.ToList()
+                Texts = texts.Skip(skip).Take(count).ToList()
             };
 
             return model;
@@ -115,10 +118,10 @@ namespace Joogle.Services
 
         public async Task StartParseAllSites()
         {
-            var sites = db.Sites.Where(x => !x.IsDeleted && !x.IsParsed);
+            var sites = db.Sites.Where(x => !x.IsDeleted && !x.IsParsed).ToList();
             foreach (var site in sites)
             {
-                ThreadPool.QueueUserWorkItem(SiteParse, site);
+                await SiteParse(site);
             }
         }
 
@@ -127,49 +130,87 @@ namespace Joogle.Services
         /// </summary>
         /// <param name="site">сайт</param>
         /// <returns></returns>
-        async void SiteParse(object obj)
+        public async Task SiteParse(Site site)
         {
-            var site = (Site)obj;
-            var result = new StringBuilder();
-            var parser = new HtmlParser();
-            var html = await parser.ParseAsync(site.Url);
-            var hrefs = html.QuerySelectorAll("a").OfType<IHtmlAnchorElement>();
-            var divs = html.QuerySelectorAll("div");
-            var ps = html.QuerySelectorAll("p");
-            foreach (var div in divs)
+            try
             {
-                result.Append(div.Text());
-                result.Append("");
-            }
-            foreach (var p in ps)
-            {
-                result.Append(p.Text());
-                result.Append("");
-            }
-
-            if (hrefs != null)
-            {
-                foreach (var href in hrefs)
+                using (JoogleContext data = new JoogleContext())
                 {
-                    await CreateSite(new CreateSiteRequest { Url = href.Text });
-                }
-            }
+                    //var site = (Site)obj;
+                    var result = new StringBuilder();
+                    /*var parser = new HtmlParser();
+                    var cancellationToken = new CancellationTokenSource();
+                    var httpClient = new HttpClient();
+                    var request = await httpClient.GetAsync(site.Url);
+                    cancellationToken.Token.ThrowIfCancellationRequested();
+                    var response = await request.Content.ReadAsStreamAsync();
+                    cancellationToken.Token.ThrowIfCancellationRequested();
 
-            db.Texts.Add(new Text
+                    var html = await parser.ParseAsync(response);*/
+                    var config = Configuration.Default.WithDefaultLoader();
+                    var task = BrowsingContext.New(config).OpenAsync(site.Url); //используем чтобы не было проблем с кодировкой
+                    var html = task.Result;
+
+                    var hrefs = html.QuerySelectorAll("a")
+                        .Where(x => x.Attributes["href"] != null)
+                        .Select(x => x.Attributes["href"].Value)
+                        .Distinct()
+                        .ToList();
+                    //var divs = html.QuerySelectorAll("div");
+                    var ps = html.QuerySelectorAll("p");
+                    /*foreach (var div in divs)
+                    {
+                        result.Append(div.TextContent);
+                        result.Append(" ");
+                    }*/
+                    foreach (var p in ps)
+                    {
+                        result.Append(p.TextContent);
+                        result.Append(" ");
+                    }
+
+                    var newSites = new List<Site>();
+                    if (hrefs.Any())
+                    {
+                        hrefs.RemoveAll(x => !x.StartsWith("http"));
+                        hrefs.RemoveAll(x => x == site.Url);
+                        var existSites = db.Sites.ToList();
+                        foreach (var href in hrefs)
+                        {
+                            var url = href.Last() == '/' ? href.Remove(href.Length - 1).ToLower() : href.ToLower();
+                            //await CreateSite(new CreateSiteRequest { Url = href });
+                            if (existSites.Count(x => x.Url == url) > 0)
+                                continue;
+                            newSites.Add(new Site
+                            {
+                                Url = url,
+                                DateModify = DateTime.UtcNow
+                            });
+                        }
+                    }
+
+                    db.Sites.AddRange(newSites);
+                    db.Texts.Add(new Text
+                    {
+                        SiteId = site.Id,
+                        Url = site.Url,
+                        Title = result.ToString(),
+                        DateModify = DateTime.UtcNow
+                    });
+
+                    site.IsParsed = true;
+                    db.SaveChanges();
+                }
+                
+            }
+            catch (Exception e)
             {
-                SiteId = site.Id,
-                Url = site.Url,
-                Title = result.ToString(),
-                DateModify = DateTime.UtcNow
-            });
-            
-            site.IsParsed = true;
-            await db.SaveChangesAsync();
+                Console.WriteLine(e.Message);
+            }
+            finally
+            {
+                //db.Dispose();
+            }
         }
     }
-    /*
-    public interface IJoogleService
-    {
-        Task CreateApp(CreateSiteRequest request);
-    }*/
 }

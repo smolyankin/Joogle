@@ -157,7 +157,6 @@
     <Compile Include="Response\SitesResponse.cs" />
     <Compile Include="Response\TextsResponse.cs" />
     <Compile Include="Services\JoogleService.cs" />
-    <Compile Include="Services\ParseService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap-theme.css" />
