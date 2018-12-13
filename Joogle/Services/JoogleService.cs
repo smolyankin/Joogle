@@ -28,10 +28,11 @@ namespace Joogle.Services
         /// получить список сайтов
         /// </summary>
         /// <param name="model">модель списка сайтов</param>
-        public async Task<SitesResponse> GetAllSites(SitesResponse model)
+        public async Task<SitesResponse> GetAllSites(SitesResponse model, PageInfo pageInfo)
         {
-            var sites = db.Sites;
-            model.Sites = sites.OrderByDescending(x => x.DateModify).ToList();
+            //var sites = db.Sites;
+            model.Sites = db.Sites.OrderByDescending(x => x.DateModify).Skip((pageInfo.PageNumber - 1) * pageInfo.PageSize).Take(pageInfo.PageSize).ToList();
+            //model.Sites = sites.ToList(); //.OrderByDescending(x => x.DateModify)
 
             return model;
         }
@@ -59,11 +60,11 @@ namespace Joogle.Services
         /// информация о сайте
         /// </summary>
         /// <param name="request">сайт</param>
-        public async Task<Site> GetDetailSite(Site request)
+        public async Task<Site> GetDetailSite(long id)
         {
-            return db.Sites.FirstOrDefault(x => x.Id == request.Id);
+            return db.Sites.FirstOrDefault(x => x.Id == id);
         }
-
+        
         /// <summary>
         /// изменить сайт
         /// </summary>
@@ -71,18 +72,24 @@ namespace Joogle.Services
         public async Task EditSite(Site site)
         {
             var exist = db.Sites.FirstOrDefault(x => x.Id == site.Id);
-            if (site.IsDeleted != site.IsDeleted)
+            /*if (site.IsDeleted && exist.IsParsed)
             {
                 var texts = db.Texts.Where(x => x.SiteId == site.Id);
                 foreach (var text in texts)
+                {
+                    if (site.IsDeleted && exist.IsParsed)
+                    {
+                        text.SiteId = null;
+                    }
                     text.IsDeleted = site.IsDeleted;
+                }
             }
-            if (exist.IsParsed)
+            if (site.IsDeleted && exist.IsParsed)
             {
                 var texts = db.Texts.Where(x => x.SiteId == site.Id);
                 foreach (var text in texts)
-                    text.SiteId = null;
-            }
+                    
+            }*/
             exist = site.ShallowCopy();
             db.SaveChanges();
         }

@@ -1,4 +1,5 @@
 ﻿@model Joogle.Response.SitesResponse
+@using Joogle.Helpers
 
 <h1>Список заявок</h1>
 
@@ -6,44 +7,54 @@
     @Html.ActionLink("Добавить сайт", "Create")
 </p>
 
-<table class="table">
-    <tr>
-        <th>
+<table class="table col-md-12" style="width: 100%">
+    <tr class="col-md-12" style="width: 100%">
+        <th class="col-md-6">
             Адрес сайта
         </th>
-        <th>
+        <th class="col-md-1">
             Обработан
         </th>
-        <th>
+        <th class="col-md-1">
             Удален
         </th>
-        <th>
+        <th class="col-md-2">
             Дата изменения
         </th>
-        <th>Изменить</th>
-        <th>Удалить</th>
+        <th class="col-md-1">
+            Изменить
+        </th>
+        <th class="col-md-1">
+            Удалить
+        </th>
     </tr>
     @foreach (var site in Model.Sites)
     {
-    <tr>
-        <td>
-            @Html.DisplayFor(model => site.Url, new { htmlAttributes = new { @class = "col-md-6" } })
-        </td>
-        <td>
-            @Html.DisplayFor(appsItem => site.IsParsed, new { htmlAttributes = new { @class = "col-md-1" } })
-        </td>
-        <td>
-            @Html.DisplayFor(appsItem => site.IsDeleted, new { htmlAttributes = new { @class = "col-md-1" } })
-        </td>
-        <td>
-            @Html.DisplayFor(appsItem => site.DateModify, new { htmlAttributes = new { @class = "col-md-3" } })
-        </td>
-        <td>
-            @Html.ActionLink("Изменить", "Edit", new { id = site.Id })
-        </td>
-        <td>
-            @Html.ActionLink("Удалить", "Delete", new { id = site.Id })
-        </td>
-    </tr>
+        <tr class="col-md-12" style="width: 100%">
+            <td class="col-md-6">
+                @Html.DisplayFor(model => site.Url, new { htmlAttributes = new { @class = "col-md-6" } })
+            </td>
+            <td class="col-md-1">
+                @Html.DisplayFor(appsItem => site.IsParsed, new { htmlAttributes = new { @class = "col-md-1" } })
+            </td>
+            <td class="col-md-1">
+                @Html.DisplayFor(appsItem => site.IsDeleted, new { htmlAttributes = new { @class = "col-md-1" } })
+            </td>
+            <td class="col-md-2">
+                @Html.DisplayFor(appsItem => site.DateModify, new { htmlAttributes = new { @class = "col-md-2" } })
+            </td>
+            <td class="col-md-1">
+                @Html.ActionLink("Изменить", "Edit", new { id = site.Id })
+            </td>
+            <td class="col-md-1">
+                @Html.ActionLink("Удалить", "Delete", new { id = site.Id })
+            </td>
+        </tr>
     }
 </table>
+@if (Model.PageInfo.TotalPages != 0)
+{
+    <div class="btn-group">
+        @Html.PageLinks(Model.PageInfo, x => Url.Action("Sites", new { page = x }))
+    </div>
+}

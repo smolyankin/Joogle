@@ -61,9 +61,15 @@ namespace Joogle.Controllers
             return View();
         }
 
-        public ActionResult Sites(SitesResponse model)
+        public ActionResult Sites(SitesResponse model, int page = 1)
         {
-            model = joogleService.GetAllSites(model).GetAwaiter().GetResult();
+            int pageSize = 10;
+            model.PageInfo = new PageInfo
+            {
+                PageNumber = page,
+                PageSize = pageSize
+            };
+            model = joogleService.GetAllSites(model, model.PageInfo).GetAwaiter().GetResult();
 
             return View(model);
         }
@@ -108,6 +114,37 @@ namespace Joogle.Controllers
             try
             {
                 joogleService.StartParseAllSites().GetAwaiter().GetResult();
+
+                return RedirectToAction("Sites");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+        /// <summary>
+        /// изменить сайт
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns>возврат на страницу списка заявок</returns>
+        public ActionResult Edit(long id)
+        {
+            var model = joogleService.GetDetailSite(id).GetAwaiter().GetResult();
+            return View(model);
+        }
+
+        /// <summary>
+        /// изменить сайт
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns>возврат на страницу списка заявок</returns>
+        [HttpPost]
+        public ActionResult Edit(Site model)
+        {
+            try
+            {
+                joogleService.EditSite(model).GetAwaiter().GetResult();
 
                 return RedirectToAction("Sites");
             }

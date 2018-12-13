@@ -8,6 +8,8 @@ namespace Joogle.Response
 {
     public class SitesResponse
     {
-        public List<Site> Sites { get; set; }
+        public List<Site> Sites { get; set; } = new List<Site>();
+
+        public PageInfo PageInfo { get; set; } = new PageInfo();
     }
 }
