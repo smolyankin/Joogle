@@ -15,11 +15,11 @@ namespace Joogle.Controllers
     {
         JoogleService joogleService = new JoogleService();
 
-        [AcceptVerbs(HttpVerbs.Get | HttpVerbs.Post)]
-        public ActionResult Index(TextsResponse model, string search, int page = 1)
+        //[AcceptVerbs(HttpVerbs.Get | HttpVerbs.Post)]
+        public ActionResult Index(TextsResponse model)
         {
             //var model = new TextsResponse();
-            model.PageInfo.PageSize = 10;
+            /*model.PageInfo.PageSize = 10;
             if (!string.IsNullOrWhiteSpace(model.Search))
             {
                 model.PageInfo.PageSize = 10;
@@ -41,7 +41,19 @@ namespace Joogle.Controllers
                         PageSize = model.PageInfo.PageSize
                     }
                 };
-            }
+            }*/
+            return View(model);
+        }
+
+        [HttpGet]
+        public ActionResult Search(TextsResponse model, int page = 1)
+        {
+            model.PageInfo = new PageInfo
+            {
+                PageNumber = page,
+                PageSize = 10
+            };
+            model = joogleService.Search(model, model.PageInfo).GetAwaiter().GetResult();
             return View(model);
         }
         /*

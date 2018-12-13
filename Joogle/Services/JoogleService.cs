@@ -114,16 +114,53 @@ namespace Joogle.Services
         public async Task<TextsResponse> Search(TextsResponse model, PageInfo pageInfo)
         {
             var texts = db.Texts.Where(x => x.Title.Contains(model.Search)).OrderByDescending(x => x.DateModify).Skip((pageInfo.PageNumber - 1) * pageInfo.PageSize).Take(pageInfo.PageSize).ToList();
-            var countPages = db.Texts.Where(x => x.Title.Contains(model.Search)).Count();
+            var countTexts = db.Texts.Where(x => x.Title.Contains(model.Search)).Count();
             model.Search = model.Search;
             model.Texts = texts;
-            var oldTotalItems = model.PageInfo.TotalItems;
-            model.PageInfo.TotalItems = countPages;
-            if (model.SearchOld != model.Search)
-                model.PageInfo.PageNumber = 1;
-            //model.PageInfo.PageNumber = model.SearchOld == model.Search ? model.PageInfo.PageNumber : 1;
+            //var oldTotalItems = model.PageInfo.TotalItems;
+            model.PageInfo.TotalItems = countTexts;
+            SubstringTexts(model);
 
             return model;
+        }
+
+        private void SubstringTexts(TextsResponse model)
+        {
+            var search = model.Search;
+            //var newTexts = new List<Text>();
+            foreach (var text in model.Texts)
+            {
+                StringBuilder newTitle = new StringBuilder(string.Empty);
+                List<char> result = new List<char>();
+                var title = text.Title;
+                var startIndex = title.IndexOf(search) + 1;
+                var endIndex = startIndex + search.Length;
+                var searchLength = search.Length;
+                while (result.Count <= 400)
+                {
+                    if (result.Count == title.Length)
+                        break;
+                    result.AddRange(search.ToList());
+                    bool reverse = true;
+
+                    if (reverse)
+                    {
+                        var newItemIndex = endIndex + 1;
+                        result.Add(title[newItemIndex]);
+                        reverse = false;
+                    }
+                    else
+                    {
+                        result.Reverse();
+                        var newItemIndex = startIndex - 1;
+                        result.Add(title[newItemIndex]);
+                        reverse = true;
+                        result.Reverse();
+                    }
+                }
+                result.ForEach(x => newTitle.Append(x));
+                text.Title = newTitle.ToString();
+            }
         }
 
         public async Task StartParseAllSites()

@@ -1,58 +1,50 @@
 ﻿@model Joogle.Response.TextsResponse
 @using Joogle.Helpers
 
-@{
-    Model.SearchOld = Model.Search;
-    if (!string.IsNullOrWhiteSpace(Model.Search))
+<div class="jumbotron text-center">
+    <h1>Joogle</h1>
+    @using (Html.BeginForm("Search", "Home", FormMethod.Get))
     {
-        Model.Search = Model.Search;
-    }
-}
-<!--<div class="jumbotron">-->
-<h1>Joogle</h1>
-@Model.PageInfo.PageNumber.ToString()
-@using (Html.BeginForm())
-{
-    <div class="form-horizontal">
-        <hr />
-        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-        <div class="form-group">
-            <div class="col-md-12" style="width: 100%">
-                @Html.EditorFor(model => model.Search, new { htmlAttributes = new { @class = "form-control" } })
-                @Html.ValidationMessageFor(model => model.Search, "", new { @class = "text-danger" })
+        <div class="form-horizontal">
+            <hr />
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+            <div class="form-group mycenter">
+                <div>
+                    @Html.EditorFor(model => model.Search, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.Search, "", new { @class = "text-danger" })
+                </div>
             </div>
         </div>
-    </div>
-
-    //</div>
-    <div>
-        @if (Model.Texts.Any())
-        {
-            foreach (var text in Model.Texts)
-            {
-                var txt = text.Url.Substring(0, Math.Min(text.Url.Length, 50));
-                var head = text.Url == txt ? txt : txt + "...";
-                var result = text.Title.Substring(0, Math.Min(text.Title.Length, 500));
-                <div style="padding-bottom: 10px">
-                    <div>
-                        <a href="@text.Url">
-                            @Html.DisplayFor(model => head, new { htmlAttributes = new { @class = "col-md-4" } })
-                        </a>
-                    </div>
-                    <div>
-                        @Html.DisplayFor(model => result, new { htmlAttributes = new { @class = "col-md-8" } })
-                    </div>
-                </div>
-            }
-        }
-    </div>
-    <br />
-
-    if (Model.PageInfo.TotalPages != 0)
-    {
-        <div class="btn-group">
-            @Html.PageLinks(Model.PageInfo, x => Url.Action("Index", new { search = Model.Search, page = x }))
-        </div>
     }
-    //@Html.HiddenFor(model => Model.PageInfo.PageNumber = page);
-}
+</div>
+@*<div>
+            @if (Model.Texts.Any())
+            {
+                foreach (var text in Model.Texts)
+                {
+                    var txt = text.Url.Substring(0, Math.Min(text.Url.Length, 50));
+                    var head = text.Url == txt ? txt : txt + "...";
+                    var result = text.Title.Substring(0, Math.Min(text.Title.Length, 500));
+                    <div style="padding-bottom: 10px">
+                        <div>
+                            <a href="@text.Url">
+                                @Html.DisplayFor(model => head, new { htmlAttributes = new { @class = "col-md-4" } })
+                            </a>
+                        </div>
+                        <div>
+                            @Html.DisplayFor(model => result, new { htmlAttributes = new { @class = "col-md-8" } })
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        <br />
+
+        if (Model.PageInfo.TotalPages != 0)
+        {
+            <div class="btn-group">
+                @Html.PageLinks(Model.PageInfo, x => Url.Action("Index", new { search = Model.Search, page = x }))
+            </div>
+        }
+        //@Html.HiddenFor(model => Model.PageInfo.PageNumber = page);
+    *@
