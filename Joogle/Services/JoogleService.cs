@@ -117,7 +117,6 @@ namespace Joogle.Services
             var countTexts = db.Texts.Where(x => x.Title.Contains(model.Search)).Count();
             model.Search = model.Search;
             model.Texts = texts;
-            //var oldTotalItems = model.PageInfo.TotalItems;
             model.PageInfo.TotalItems = countTexts;
             SubstringTexts(model);
 
@@ -127,36 +126,53 @@ namespace Joogle.Services
         private void SubstringTexts(TextsResponse model)
         {
             var search = model.Search;
-            //var newTexts = new List<Text>();
+            var searchLength = search.Length;
+            var maxLength = 200;
+            
             foreach (var text in model.Texts)
             {
                 StringBuilder newTitle = new StringBuilder(string.Empty);
-                List<char> result = new List<char>();
+                var result = new List<char>();
                 var title = text.Title;
-                var startIndex = title.IndexOf(search) + 1;
-                var endIndex = startIndex + search.Length;
-                var searchLength = search.Length;
-                while (result.Count <= 400)
+                var startIndex = title.IndexOf(search);
+                if (startIndex < 0)
+                    startIndex++;
+                var endIndex = startIndex + search.Length - 1;
+                var searchFromTitle = title.Substring(startIndex, searchLength);
+                
+                var before = startIndex;
+                var after = endIndex;
+
+                var start = "<span style=\"color:red\";>";
+                var end = "</span>";
+                result.AddRange(start);
+                result.AddRange(searchFromTitle);
+                result.AddRange(end);
+                var reverse = true;
+                while (result.Count < maxLength)
                 {
                     if (result.Count == title.Length)
                         break;
-                    result.AddRange(search.ToList());
-                    bool reverse = true;
-
                     if (reverse)
                     {
-                        var newItemIndex = endIndex + 1;
-                        result.Add(title[newItemIndex]);
-                        reverse = false;
+                        if (before > 0)
+                        {
+                            before--;
+                            result.Reverse();
+                            result.Add(title[before]);
+                            result.Reverse();
+                        }
                     }
                     else
                     {
-                        result.Reverse();
-                        var newItemIndex = startIndex - 1;
-                        result.Add(title[newItemIndex]);
-                        reverse = true;
-                        result.Reverse();
+                        if (after < title.Length - 1)
+                        {
+                            after++;
+                            result.Add(title[after]);
+                        }
                     }
+
+                    reverse = !reverse;
                 }
                 result.ForEach(x => newTitle.Append(x));
                 text.Title = newTitle.ToString();

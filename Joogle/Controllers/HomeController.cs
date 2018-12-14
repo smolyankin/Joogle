@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
 using Joogle.Models;
@@ -54,6 +56,7 @@ namespace Joogle.Controllers
                 PageSize = 10
             };
             model = joogleService.Search(model, model.PageInfo).GetAwaiter().GetResult();
+            //model.Texts.ForEach(x => Regex.Replace(x.Title, model.Search, "<strong>" + model.Search + "</strong>"));
             return View(model);
         }
         /*
