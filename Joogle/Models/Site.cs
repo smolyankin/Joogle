@@ -40,13 +40,5 @@ namespace Joogle.Models
         [Column]
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:yyyy-MM-dd HH:mm}")]
         public DateTime DateModify { get; set; }
-
-        /// <summary>
-        /// простое копирование
-        /// </summary>
-        public Site ShallowCopy()
-        {
-            return (Site)this.MemberwiseClone();
-        }
     }
 }

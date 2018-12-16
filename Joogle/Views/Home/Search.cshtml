@@ -1,13 +1,12 @@
 ﻿@model Joogle.Response.TextsResponse
+@using System.Text.RegularExpressions
 @using Joogle.Helpers
 
 @{
-    Model.SearchOld = Model.Search;
-    if (!string.IsNullOrWhiteSpace(Model.Search))
-    {
-        Model.Search = Model.Search;
-    }
+    ViewBag.Title = "Search";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
+
 <div class="jumbotron text-center">
     <h1>Joogle</h1>
     @using (Html.BeginForm("Search", "Home", FormMethod.Get))
@@ -31,7 +30,6 @@
         {
             var txt = text.Url.Substring(0, Math.Min(text.Url.Length, 50));
             var head = text.Url == txt ? txt : txt + "...";
-            //var result = text.Title.Substring(0, Math.Min(text.Title.Length, 500));
             <div style="padding-bottom: 10px">
                 <div>
                     <a href="@text.Url">
@@ -39,9 +37,7 @@
                     </a>
                 </div>
                 <div>
-                    @Html.Raw(text.Title);
                     @MvcHtmlString.Create(text.Title);
-                    @*@Html.DisplayFor(model => result, new {htmlAttributes = new {@class = "col-md-8"}})*@
                 </div>
             </div>
         }
@@ -51,8 +47,7 @@
 
 @if (Model.PageInfo.TotalPages != 0)
 {
-<div class="btn-group">
-    @Html.PageLinks(Model.PageInfo, x => Url.Action("Search", new { search = Model.Search, page = x }))
-</div>
+    <div class="btn-group">
+        @Html.PageLinks(Model.PageInfo, x => Url.Action("Search", new { search = Model.Search, page = x }))
+    </div>
 }
-    

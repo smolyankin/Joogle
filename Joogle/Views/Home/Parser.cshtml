@@ -1,11 +1,13 @@
-﻿@{
+﻿@model Joogle.Response.ParseResponse
+
+@{
     ViewBag.Title = "Parser";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <h1>Парсер</h1>
 
-@using (Html.BeginForm())
+@using (Html.BeginForm("Parser", "Home", FormMethod.Post))
 {
     @Html.AntiForgeryToken()
 
@@ -14,9 +16,42 @@
         <div>
             Парсер соберает весь текст с сайтов, с которых еще не собирал и сохраняет в базу данных.
         </div>
+        <br />
         <div class="form-group">
-            <div class="col-md-offset-2 col-md-10">
+            <div>
                 <input type="submit" value="Запустить" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+<br />
+@if (Model.Finished)
+{
+    var time = Model.Time.Minutes + " мин. " + Model.Time.Seconds + " сек.";
+    <div>
+        <div>
+            Обработано сайтов: @Html.DisplayFor(model => model.Sites)
+        </div>
+        <br />
+        <div>
+            Затрачено времени: @Html.DisplayFor(model => time)
+        </div>
+    </div>
+}
+<br />
+@using (Html.BeginForm("Clear", "Home", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <hr />
+        <div>
+            При нажатии кнопки, база данных будет полностью очищена. Отменить или прервать действие невозможно.
+        </div>
+        <br />
+        <div class="form-group">
+            <div>
+                <input type="submit" value="Очистить базу данных" class="btn btn-default" />
             </div>
         </div>
     </div>

@@ -1,1 +1,52 @@
-﻿
+﻿@model Joogle.Models.Site
+
+@{
+    ViewBag.Title = "Delete";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Удаление сайта и связанного текста</h2>
+
+<div>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            Адрес
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Url)
+        </dd>
+        <dt>
+            Обработан
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.IsParsed)
+        </dd>
+        <dt>
+            Удален
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.IsDeleted)
+        </dd>
+        <dt>
+            Дата изменения
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.DateModify)
+        </dd>
+    </dl>
+
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="form-actions no-color">
+            <div>
+                <input type="submit" value="Удалить" class="btn btn-default" />
+            </div>
+            <div>
+                @Html.ActionLink("Вернуться к списку сайтов", "Sites")
+            </div>
+        </div>
+    }
+</div>

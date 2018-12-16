@@ -4,13 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Joogle.Context;
 using System.Data;
-using System.Net.Http;
 using System.Text;
 using System.Threading;
 using AngleSharp;
-using AngleSharp.Dom.Html;
 using AngleSharp.Extensions;
-using AngleSharp.Parser.Html;
+using Joogle.Extensions;
 using Joogle.Models;
 using Joogle.Request;
 using Joogle.Response;
@@ -22,19 +20,23 @@ namespace Joogle.Services
     /// </summary>
     public class JoogleService
     {
-        private JoogleContext db = new JoogleContext();
-
         /// <summary>
         /// получить список сайтов
         /// </summary>
         /// <param name="model">модель списка сайтов</param>
+        /// <param name="pageInfo">информация о странице</param>
+        /// <returns>модель списка сайтов</returns>
         public async Task<SitesResponse> GetAllSites(SitesResponse model, PageInfo pageInfo)
         {
-            //var sites = db.Sites;
-            model.Sites = db.Sites.OrderByDescending(x => x.DateModify).Skip((pageInfo.PageNumber - 1) * pageInfo.PageSize).Take(pageInfo.PageSize).ToList();
-            //model.Sites = sites.ToList(); //.OrderByDescending(x => x.DateModify)
+            using (var db = new JoogleContext())
+            {
+                var sites = db.Sites.OrderByDescending(x => x.DateModify).Skip((pageInfo.PageNumber - 1) * pageInfo.PageSize).Take(pageInfo.PageSize).ToList();
+                var countSites = db.Sites.Count();
+                model.Sites = sites;
+                model.PageInfo.TotalItems = countSites;
 
-            return model;
+                return model;
+            }
         }
 
         /// <summary>
@@ -43,98 +45,112 @@ namespace Joogle.Services
         /// <param name="request">модель создания сайта</param>
         public async Task CreateSite(CreateSiteRequest request)
         {
-            var url = request.Url.Last() == '/' ? request.Url.Remove(request.Url.Length - 1) : request.Url;
-            var exist = db.Sites.FirstOrDefault(x => x.Url == url.ToLower());
-            if (exist != null)
-                return;
-            var site = new Site
+            using (var db = new JoogleContext())
             {
-                Url = url.ToLower(),
-                DateModify = DateTime.UtcNow
-            };
-            db.Sites.Add(site);
-            db.SaveChanges();
+                var url = request.Url.Last() == '/' ? request.Url.Remove(request.Url.Length - 1) : request.Url;
+                var exist = db.Sites.FirstOrDefault(x => x.Url == url.ToLower());
+                if (exist != null)
+                    return;
+                var site = new Site
+                {
+                    Url = url.ToLower(),
+                    DateModify = DateTime.UtcNow
+                };
+                db.Sites.Add(site);
+                db.SaveChanges();
+            }
         }
 
         /// <summary>
         /// информация о сайте
         /// </summary>
-        /// <param name="request">сайт</param>
+        /// <param name="id">ид сайта</param>
         public async Task<Site> GetDetailSite(long id)
         {
-            return db.Sites.FirstOrDefault(x => x.Id == id);
+            using (var db = new JoogleContext())
+            {
+                return db.Sites.FirstOrDefault(x => x.Id == id);
+            }
         }
-        
+
         /// <summary>
         /// изменить сайт
         /// </summary>
-        /// <param name="request">сайт</param>
+        /// <param name="site">сайт</param>
         public async Task EditSite(Site site)
         {
-            var exist = db.Sites.FirstOrDefault(x => x.Id == site.Id);
-            /*if (site.IsDeleted && exist.IsParsed)
+            using (var db = new JoogleContext())
             {
-                var texts = db.Texts.Where(x => x.SiteId == site.Id);
-                foreach (var text in texts)
+                var exist = db.Sites.FirstOrDefault(x => x.Id == site.Id);
+                if (site.IsParsed)
                 {
-                    if (site.IsDeleted && exist.IsParsed)
-                    {
-                        text.SiteId = null;
-                    }
-                    text.IsDeleted = site.IsDeleted;
+                    var texts = db.Texts.Where(x => x.SiteId == site.Id).ToList();
+                    texts.ForEach(t => t.IsDeleted = site.IsDeleted);
                 }
+                exist.IsDeleted = site.IsDeleted;
+                db.SaveChanges();
             }
-            if (site.IsDeleted && exist.IsParsed)
-            {
-                var texts = db.Texts.Where(x => x.SiteId == site.Id);
-                foreach (var text in texts)
-                    
-            }*/
-            exist = site.ShallowCopy();
-            db.SaveChanges();
+            
         }
 
         /// <summary>
         /// удалить сайт и все связанные текста
         /// </summary>
-        /// <param name="id">ид сайта</param>
-        public async Task DeleteSite(long id)
+        /// <param name="site">сайт</param>
+        public async Task DeleteSite(Site site)
         {
-            var site = db.Sites.FirstOrDefault(x => x.Id == id);
-            var texts = db.Texts.Where(x => x.SiteId == site.Id);
-            db.Texts.RemoveRange(texts);
-            db.Sites.Remove(site);
-            db.SaveChanges();
+            try
+            {
+                using (var db = new JoogleContext())
+                {
+                    var exist = db.Sites.FirstOrDefault(x => x.Id == site.Id);
+                    var text = db.Texts.FirstOrDefault(x => x.SiteId == exist.Id);
+                    if (text != null)
+                        db.Texts.Remove(text);
+                    if (exist != null)
+                        db.Sites.Remove(exist);
+                    db.SaveChanges();
+                }
+            }
+            catch { }
         }
 
         /// <summary>
         /// получить список текстов
         /// </summary>
-        /// <param name="search">поисковый запрос</param>
+        /// <param name="model">модель результата поиска</param>
+        /// /// <param name="pageInfo">информация о странице</param>
         public async Task<TextsResponse> Search(TextsResponse model, PageInfo pageInfo)
         {
-            var texts = db.Texts.Where(x => x.Title.Contains(model.Search)).OrderByDescending(x => x.DateModify).Skip((pageInfo.PageNumber - 1) * pageInfo.PageSize).Take(pageInfo.PageSize).ToList();
-            var countTexts = db.Texts.Where(x => x.Title.Contains(model.Search)).Count();
-            model.Search = model.Search;
-            model.Texts = texts;
-            model.PageInfo.TotalItems = countTexts;
-            SubstringTexts(model);
+            using (var db = new JoogleContext())
+            {
+                var texts = db.Texts.Where(x => x.Title.Contains(model.Search)).OrderByDescending(x => x.DateModify).Skip((pageInfo.PageNumber - 1) * pageInfo.PageSize).Take(pageInfo.PageSize).ToList();
+                var countTexts = db.Texts.Where(x => x.Title.Contains(model.Search)).Count();
+                model.Search = model.Search;
+                model.Texts = texts;
+                model.PageInfo.TotalItems = countTexts;
+                SubstringTexts(model);
 
-            return model;
+                return model;
+            }
         }
 
+        /// <summary>
+        /// урезание текста и выделение запроса
+        /// </summary>
+        /// <param name="model"></param>
         private void SubstringTexts(TextsResponse model)
         {
             var search = model.Search;
             var searchLength = search.Length;
-            var maxLength = 200;
+            var maxLength = 400;
             
             foreach (var text in model.Texts)
             {
                 StringBuilder newTitle = new StringBuilder(string.Empty);
                 var result = new List<char>();
                 var title = text.Title;
-                var startIndex = title.IndexOf(search);
+                var startIndex = title.ToLower().IndexOf(search);
                 if (startIndex < 0)
                     startIndex++;
                 var endIndex = startIndex + search.Length - 1;
@@ -179,39 +195,49 @@ namespace Joogle.Services
             }
         }
 
-        public async Task StartParseAllSites()
+        /// <summary>
+        /// запуск парсера
+        /// </summary>
+        /// <param name="model">модель парсера</param>
+        /// <returns></returns>
+        public async Task<ParseResponse> StartParseAllSites(ParseResponse model)
         {
-            var sites = db.Sites.Where(x => !x.IsDeleted && !x.IsParsed).ToList();
-            foreach (var site in sites)
+            using (var db = new JoogleContext())
             {
-                await SiteParse(site);
+                var startTime = DateTime.UtcNow;
+                var sites = db.Sites.Where(x => !x.IsDeleted && !x.IsParsed).ToList();
+                List<Thread> threads = new List<Thread>();
+                foreach (var site in sites)
+                    threads.Add(new Thread(() => SiteParse(site)));
+                threads.ForEach(x => x.Start());
+                threads.WaitAll();
+                
+                var endTime = DateTime.UtcNow;
+                model.Sites = sites.Count;
+                model.Time = endTime - startTime;
+                model.Finished = true;
+
+                return model;
             }
         }
 
         /// <summary>
         /// парсинг сайта
         /// </summary>
-        /// <param name="site">сайт</param>
+        /// <param name="obj">сайт</param>
         /// <returns></returns>
-        public async Task SiteParse(Site site)
+        private async Task SiteParse(object obj) //void
         {
             try
             {
-                using (JoogleContext data = new JoogleContext())
+                using (var db = new JoogleContext())
                 {
-                    //var site = (Site)obj;
-                    var result = new StringBuilder();
-                    /*var parser = new HtmlParser();
-                    var cancellationToken = new CancellationTokenSource();
-                    var httpClient = new HttpClient();
-                    var request = await httpClient.GetAsync(site.Url);
-                    cancellationToken.Token.ThrowIfCancellationRequested();
-                    var response = await request.Content.ReadAsStreamAsync();
-                    cancellationToken.Token.ThrowIfCancellationRequested();
 
-                    var html = await parser.ParseAsync(response);*/
+                    var site = (Site)obj;
+                    var exist = db.Sites.FirstOrDefault(x => x.Id == site.Id);
+                    var result = new StringBuilder();
                     var config = Configuration.Default.WithDefaultLoader();
-                    var task = BrowsingContext.New(config).OpenAsync(site.Url); //используем чтобы не было проблем с кодировкой
+                    var task = BrowsingContext.New(config).OpenAsync(site.Url);
                     var html = task.Result;
 
                     var hrefs = html.QuerySelectorAll("a")
@@ -219,16 +245,12 @@ namespace Joogle.Services
                         .Select(x => x.Attributes["href"].Value)
                         .Distinct()
                         .ToList();
-                    //var divs = html.QuerySelectorAll("div");
-                    var ps = html.QuerySelectorAll("p");
-                    /*foreach (var div in divs)
+
+                    var selectors = html.QuerySelectorAll("h1, h2, h3, h4, p");
+                    foreach (var selector in selectors)
                     {
-                        result.Append(div.TextContent);
                         result.Append(" ");
-                    }*/
-                    foreach (var p in ps)
-                    {
-                        result.Append(p.TextContent);
+                        result.Append(selector.TextContent);
                         result.Append(" ");
                     }
 
@@ -236,13 +258,11 @@ namespace Joogle.Services
                     if (hrefs.Any())
                     {
                         hrefs.RemoveAll(x => !x.StartsWith("http"));
-                        hrefs.RemoveAll(x => x == site.Url);
-                        var existSites = db.Sites.ToList();
                         foreach (var href in hrefs)
                         {
                             var url = href.Last() == '/' ? href.Remove(href.Length - 1).ToLower() : href.ToLower();
-                            //await CreateSite(new CreateSiteRequest { Url = href });
-                            if (existSites.Count(x => x.Url == url) > 0)
+                            var existUrl = db.Sites.FirstOrDefault(x => x.Url == url);
+                            if (existUrl != null || url == exist.Url)
                                 continue;
                             newSites.Add(new Site
                             {
@@ -252,28 +272,40 @@ namespace Joogle.Services
                         }
                     }
 
-                    db.Sites.AddRange(newSites);
-                    db.Texts.Add(new Text
+                    if (!string.IsNullOrWhiteSpace(result.ToString()))
                     {
-                        SiteId = site.Id,
-                        Url = site.Url,
-                        Title = result.ToString(),
-                        DateModify = DateTime.UtcNow
-                    });
+                        db.Texts.Add(new Text
+                        {
+                            SiteId = exist.Id,
+                            Url = site.Url,
+                            Title = result.ToString(),
+                            DateModify = DateTime.UtcNow
+                        });
+                    }
 
-                    site.IsParsed = true;
+                    exist.IsParsed = true;
+                    db.Sites.AddRange(newSites);
                     db.SaveChanges();
                 }
-                
             }
-            catch (Exception e)
+            catch { }
+        }
+
+        /// <summary>
+        /// очистка базы данных
+        /// </summary>
+        /// <returns></returns>
+        public async Task ClearDatabase()
+        {
+            try
             {
-                Console.WriteLine(e.Message);
+                using (var db = new JoogleContext())
+                {
+                    db.Database.ExecuteSqlCommand("TRUNCATE TABLE [Sites]");
+                    db.Database.ExecuteSqlCommand("TRUNCATE TABLE [Texts]");
+                }
             }
-            finally
-            {
-                //db.Dispose();
-            }
+            catch { }
         }
     }
 }

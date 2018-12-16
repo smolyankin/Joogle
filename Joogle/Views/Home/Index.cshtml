@@ -1,5 +1,9 @@
 ﻿@model Joogle.Response.TextsResponse
-@using Joogle.Helpers
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
 
 <div class="jumbotron text-center">
     <h1>Joogle</h1>
@@ -17,34 +21,3 @@
         </div>
     }
 </div>
-@*<div>
-            @if (Model.Texts.Any())
-            {
-                foreach (var text in Model.Texts)
-                {
-                    var txt = text.Url.Substring(0, Math.Min(text.Url.Length, 50));
-                    var head = text.Url == txt ? txt : txt + "...";
-                    var result = text.Title.Substring(0, Math.Min(text.Title.Length, 500));
-                    <div style="padding-bottom: 10px">
-                        <div>
-                            <a href="@text.Url">
-                                @Html.DisplayFor(model => head, new { htmlAttributes = new { @class = "col-md-4" } })
-                            </a>
-                        </div>
-                        <div>
-                            @Html.DisplayFor(model => result, new { htmlAttributes = new { @class = "col-md-8" } })
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-        <br />
-
-        if (Model.PageInfo.TotalPages != 0)
-        {
-            <div class="btn-group">
-                @Html.PageLinks(Model.PageInfo, x => Url.Action("Index", new { search = Model.Search, page = x }))
-            </div>
-        }
-        //@Html.HiddenFor(model => Model.PageInfo.PageNumber = page);
-    *@

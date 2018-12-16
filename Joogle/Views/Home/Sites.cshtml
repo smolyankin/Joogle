@@ -1,52 +1,58 @@
 ﻿@model Joogle.Response.SitesResponse
 @using Joogle.Helpers
 
-<h1>Список заявок</h1>
+@{
+    ViewBag.Title = "Sites";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h1>Список сайтов</h1>
 
 <p>
     @Html.ActionLink("Добавить сайт", "Create")
 </p>
 
-<table class="table col-md-12" style="width: 100%">
-    <tr class="col-md-12" style="width: 100%">
-        <th class="col-md-6">
+<table class="table">
+    <tr>
+        <th>
             Адрес сайта
         </th>
-        <th class="col-md-1">
+        <th>
             Обработан
         </th>
-        <th class="col-md-1">
+        <th>
             Удален
         </th>
-        <th class="col-md-2">
+        <th>
             Дата изменения
         </th>
-        <th class="col-md-1">
+        <th>
             Изменить
         </th>
-        <th class="col-md-1">
+        <th>
             Удалить
         </th>
     </tr>
     @foreach (var site in Model.Sites)
     {
-        <tr class="col-md-12" style="width: 100%">
-            <td class="col-md-6">
-                @Html.DisplayFor(model => site.Url, new { htmlAttributes = new { @class = "col-md-6" } })
+        var txt = site.Url.Substring(0, Math.Min(site.Url.Length, 40));
+        var head = site.Url == txt ? txt : txt + "...";
+        <tr>
+            <td>
+                @Html.DisplayFor(model => head, new { htmlAttributes = new { @class = "col-md-6" } })
             </td>
-            <td class="col-md-1">
+            <td>
                 @Html.DisplayFor(appsItem => site.IsParsed, new { htmlAttributes = new { @class = "col-md-1" } })
             </td>
-            <td class="col-md-1">
+            <td>
                 @Html.DisplayFor(appsItem => site.IsDeleted, new { htmlAttributes = new { @class = "col-md-1" } })
             </td>
-            <td class="col-md-2">
+            <td>
                 @Html.DisplayFor(appsItem => site.DateModify, new { htmlAttributes = new { @class = "col-md-2" } })
             </td>
-            <td class="col-md-1">
+            <td>
                 @Html.ActionLink("Изменить", "Edit", new { id = site.Id })
             </td>
-            <td class="col-md-1">
+            <td>
                 @Html.ActionLink("Удалить", "Delete", new { id = site.Id })
             </td>
         </tr>

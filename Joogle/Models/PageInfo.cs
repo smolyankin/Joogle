@@ -1,16 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
 namespace Joogle.Models
 {
+    /// <summary>
+    /// информация о странице
+    /// </summary>
     public class PageInfo
     {
-        public int PageNumber { get; set; } = 1; // номер текущей страницы
-        public int PageSize { get; set; } = 1; // кол-во объектов на странице
-        public int TotalItems { get; set; } // всего объектов
-        public int TotalPages  // всего страниц
+        /// <summary>
+        /// номер текущей страницы
+        /// </summary>
+        public int PageNumber { get; set; } = 1;
+
+        /// <summary>
+        /// кол-во объектов на странице
+        /// </summary>
+        public int PageSize { get; set; } = 1;
+
+        /// <summary>
+        /// всего объектов
+        /// </summary>
+        public int TotalItems { get; set; }
+
+        /// <summary>
+        /// всего страниц
+        /// </summary>
+        public int TotalPages
         {
             get { return (int)Math.Ceiling((decimal)TotalItems / PageSize); }
         }

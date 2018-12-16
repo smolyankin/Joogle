@@ -9,7 +9,6 @@ using Joogle.Models;
 using Joogle.Response;
 using Joogle.Services;
 using Joogle.Request;
-//using Joogle.Helpers;
 
 namespace Joogle.Controllers
 {
@@ -17,36 +16,22 @@ namespace Joogle.Controllers
     {
         JoogleService joogleService = new JoogleService();
 
-        //[AcceptVerbs(HttpVerbs.Get | HttpVerbs.Post)]
+        /// <summary>
+        /// главная страница
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         public ActionResult Index(TextsResponse model)
         {
-            //var model = new TextsResponse();
-            /*model.PageInfo.PageSize = 10;
-            if (!string.IsNullOrWhiteSpace(model.Search))
-            {
-                model.PageInfo.PageSize = 10;
-                model.PageInfo = new PageInfo
-                {
-                    PageNumber = page,
-                    PageSize = model.PageInfo.PageSize
-                };
-                model = joogleService.Search(model, model.PageInfo).GetAwaiter().GetResult();
-            }
-            else
-            {
-                model = new TextsResponse
-                {
-                    Search = search,
-                    PageInfo = new PageInfo
-                    {
-                        PageNumber = page,
-                        PageSize = model.PageInfo.PageSize
-                    }
-                };
-            }*/
             return View(model);
         }
 
+        /// <summary>
+        /// страница поиска
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="page">номер страницы</param>
+        /// <returns>результат поиска с пагинацией</returns>
         [HttpGet]
         public ActionResult Search(TextsResponse model, int page = 1)
         {
@@ -56,41 +41,42 @@ namespace Joogle.Controllers
                 PageSize = 10
             };
             model = joogleService.Search(model, model.PageInfo).GetAwaiter().GetResult();
-            //model.Texts.ForEach(x => Regex.Replace(x.Title, model.Search, "<strong>" + model.Search + "</strong>"));
-            return View(model);
-        }
-        /*
-        [HttpPost]
-        public ActionResult Index(TextsResponse model, int page = 1)
-        {
-            int pageSize = 10; // количество объектов на страницу
-            model.PageInfo.PageSize = 10;
-            PageInfo pageInfo = new PageInfo { PageNumber = page, PageSize = pageSize };
-            model = joogleService.Search(model, model.PageInfo).GetAwaiter().GetResult();
-            return View(model);
-        }*/
-
-        [HttpGet]
-        public ActionResult Parser()
-        {
-            return View();
-        }
-
-        public ActionResult Sites(SitesResponse model, int page = 1)
-        {
-            int pageSize = 10;
-            model.PageInfo = new PageInfo
-            {
-                PageNumber = page,
-                PageSize = pageSize
-            };
-            model = joogleService.GetAllSites(model, model.PageInfo).GetAwaiter().GetResult();
-
+            
             return View(model);
         }
 
         /// <summary>
-        /// окно создания заявку
+        /// страница парсера
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public ActionResult Parser()
+        {
+            var model = new ParseResponse { Finished = false };
+            return View(model);
+        }
+
+        /// <summary>
+        /// страница сайтов
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="page"></param>
+        /// <returns>список сайтов с пагинацией</returns>
+        [HttpGet]
+        public ActionResult Sites(SitesResponse model, int page = 1)
+        {
+            model.PageInfo = new PageInfo
+            {
+                PageNumber = page,
+                PageSize = 10
+            };
+            model = joogleService.GetAllSites(model, model.PageInfo).GetAwaiter().GetResult();
+            
+            return View(model);
+        }
+
+        /// <summary>
+        /// страница добавления сайта
         /// </summary>
         [HttpGet]
         public ActionResult Create()
@@ -99,10 +85,10 @@ namespace Joogle.Controllers
         }
 
         /// <summary>
-        /// создать заявку
+        /// добавление сайта
         /// </summary>
         /// <param name="request"></param>
-        /// <returns>возврат на страницу списка заявок</returns>
+        /// <returns>возврат на страницу списка сайтов</returns>
         [HttpPost]
         public ActionResult Create(CreateSiteRequest request)
         {
@@ -119,30 +105,33 @@ namespace Joogle.Controllers
         }
 
         /// <summary>
-        /// создать заявку
+        /// запуск парсера
         /// </summary>
         /// <param name="request"></param>
-        /// <returns>возврат на страницу списка заявок</returns>
+        /// <returns>результат парсинга</returns>
         [HttpPost]
-        public ActionResult Parser(string start)
+        public ActionResult Parser(ParseResponse model)
         {
             try
             {
-                joogleService.StartParseAllSites().GetAwaiter().GetResult();
+                joogleService.StartParseAllSites(model).GetAwaiter().GetResult();
 
-                return RedirectToAction("Sites");
+                return View(model);
             }
             catch
             {
-                return View();
+                model.Sites = 0;
+                model.Time = new TimeSpan();
+                model.Finished = false;
+                return View(model);
             }
         }
 
         /// <summary>
-        /// изменить сайт
+        /// страница изменения сайта
         /// </summary>
         /// <param name="model"></param>
-        /// <returns>возврат на страницу списка заявок</returns>
+        /// <returns>информация о сайте</returns>
         public ActionResult Edit(long id)
         {
             var model = joogleService.GetDetailSite(id).GetAwaiter().GetResult();
@@ -153,7 +142,7 @@ namespace Joogle.Controllers
         /// изменить сайт
         /// </summary>
         /// <param name="model"></param>
-        /// <returns>возврат на страницу списка заявок</returns>
+        /// <returns>возврат на страницу списка сайтов</returns>
         [HttpPost]
         public ActionResult Edit(Site model)
         {
@@ -167,6 +156,54 @@ namespace Joogle.Controllers
             {
                 return View();
             }
+        }
+
+        /// <summary>
+        /// страница удаления сайта и связанного текста
+        /// </summary>
+        /// <param name="model"></param>
+        public ActionResult Delete(long id)
+        {
+            var model = joogleService.GetDetailSite(id).GetAwaiter().GetResult();
+            return View(model);
+        }
+
+        /// <summary>
+        /// удаление сайта и связанного текста
+        /// </summary>
+        /// <param name="site"></param>
+        /// <returns>на страницу сайтов</returns>
+        [HttpPost]
+        public ActionResult Delete(Site site)
+        {
+            try
+            {
+                joogleService.DeleteSite(site).GetAwaiter().GetResult();
+
+                return RedirectToAction("Sites");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+        /// <summary>
+        /// очистка базы данных
+        /// </summary>
+        /// <returns>на страницу сайтов</returns>
+        public ActionResult Clear()
+        {
+            try
+            {
+                joogleService.ClearDatabase().GetAwaiter().GetResult();
+                return RedirectToAction("Sites");
+            }
+            catch
+            {
+                return RedirectToAction("Sites");
+            }
+            
         }
     }
 }

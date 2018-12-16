@@ -142,10 +142,7 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Context\JoogleContext.cs" />
     <Compile Include="Controllers\HomeController.cs" />
-    <Compile Include="Extentions\DateTimeExtensions.cs" />
-    <Compile Include="Extentions\EnumExtensions.cs" />
-    <Compile Include="Extentions\SerializeToJsonExtensions.cs" />
-    <Compile Include="Extentions\UnixTimestampConvertor.cs" />
+    <Compile Include="Extentions\ThreadExtension.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -155,7 +152,7 @@
     <Compile Include="Models\Text.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Request\CreateSiteRequest.cs" />
-    <Compile Include="Request\EditSiteRequest.cs" />
+    <Compile Include="Response\ParseResponse.cs" />
     <Compile Include="Response\SitesResponse.cs" />
     <Compile Include="Response\TextsResponse.cs" />
     <Compile Include="Services\JoogleService.cs" />
@@ -202,9 +199,8 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Home\Create.cshtml" />
     <Content Include="Views\Home\Search.cshtml" />
-    <Content Include="Views\Home\123123.cshtml" />
-    <Content Include="Views\Home\Delete.cshtml" />
     <Content Include="Views\Home\Edit.cshtml" />
+    <Content Include="Views\Home\Delete.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
