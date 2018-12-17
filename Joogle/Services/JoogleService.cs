@@ -124,7 +124,11 @@ namespace Joogle.Services
         {
             using (var db = new JoogleContext())
             {
-                var texts = db.Texts.Where(x => x.Title.Contains(model.Search)).OrderByDescending(x => x.DateModify).Skip((pageInfo.PageNumber - 1) * pageInfo.PageSize).Take(pageInfo.PageSize).ToList();
+                var texts = db.Texts.Where(x => x.Title.Contains(model.Search))
+                    .OrderByDescending(x => x.DateModify)
+                    .Skip((pageInfo.PageNumber - 1) * pageInfo.PageSize)
+                    .Take(pageInfo.PageSize)
+                    .ToList();
                 var countTexts = db.Texts.Where(x => x.Title.Contains(model.Search)).Count();
                 model.Search = model.Search;
                 model.Texts = texts;
@@ -206,12 +210,29 @@ namespace Joogle.Services
             {
                 var startTime = DateTime.UtcNow;
                 var sites = db.Sites.Where(x => !x.IsDeleted && !x.IsParsed).ToList();
-                List<Thread> threads = new List<Thread>();
-                foreach (var site in sites)
-                    threads.Add(new Thread(() => SiteParse(site)));
-                threads.ForEach(x => x.Start());
-                threads.WaitAll();
-                
+                int maxConcurrency = 20;
+                using (SemaphoreSlim concurrencySemaphore = new SemaphoreSlim(maxConcurrency))
+                {
+                    List<Task> tasks = new List<Task>();
+                    foreach (var site in sites)
+                    {
+                        concurrencySemaphore.Wait();
+                        var t = Task.Factory.StartNew(() =>
+                        {
+                            try
+                            {
+                                SiteParse(site);
+                            }
+                            finally
+                            {
+                                concurrencySemaphore.Release();
+                            }
+                        });
+                        tasks.Add(t);
+                    }
+                    Task.WaitAll(tasks.ToArray());
+                    concurrencySemaphore.Dispose();
+                }
                 var endTime = DateTime.UtcNow;
                 model.Sites = sites.Count;
                 model.Time = endTime - startTime;
@@ -227,7 +248,7 @@ namespace Joogle.Services
         /// </summary>
         /// <param name="obj">сайт</param>
         /// <returns></returns>
-        private async Task SiteParse(object obj) //void
+        private async Task SiteParse(object obj)
         {
             try
             {
