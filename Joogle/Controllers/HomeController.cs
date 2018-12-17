@@ -46,17 +46,6 @@ namespace Joogle.Controllers
         }
 
         /// <summary>
-        /// страница парсера
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        public ActionResult Parser()
-        {
-            var model = new ParseResponse { Finished = false };
-            return View(model);
-        }
-
-        /// <summary>
         /// страница сайтов
         /// </summary>
         /// <param name="model"></param>
@@ -102,6 +91,17 @@ namespace Joogle.Controllers
             {
                 return View();
             }
+        }
+
+        /// <summary>
+        /// страница парсера
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public ActionResult Parser()
+        {
+            var model = joogleService.InfoBeforeParse().GetAwaiter().GetResult();
+            return View(model);
         }
 
         /// <summary>

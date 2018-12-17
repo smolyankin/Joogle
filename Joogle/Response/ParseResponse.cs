@@ -22,5 +22,10 @@ namespace Joogle.Response
         /// флаг завершения
         /// </summary>
         public bool Finished { get; set; }
+
+        /// <summary>
+        /// количество не обработанных сайтов
+        /// </summary>
+        public long SitesNotParsed { get; set; }
     }
 }

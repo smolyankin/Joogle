@@ -159,7 +159,7 @@ namespace Joogle.Services
                 var before = startIndex;
                 var after = endIndex;
 
-                var start = "<span style=\"color:red\";>";
+                var start = "<span style=\"background-color: yellow;\">";
                 var end = "</span>";
                 result.AddRange(start);
                 result.AddRange(searchFromTitle);
@@ -216,6 +216,7 @@ namespace Joogle.Services
                 model.Sites = sites.Count;
                 model.Time = endTime - startTime;
                 model.Finished = true;
+                model.SitesNotParsed = db.Sites.Where(x => !x.IsDeleted && !x.IsParsed).Count();
 
                 return model;
             }
@@ -306,6 +307,21 @@ namespace Joogle.Services
                 }
             }
             catch { }
+        }
+
+        /// <summary>
+        /// информация перед запуском парсера
+        /// </summary>
+        /// <returns></returns>
+        public async Task<ParseResponse> InfoBeforeParse()
+        {
+            using (var db = new JoogleContext())
+            {
+                var model = new ParseResponse();
+                model.SitesNotParsed = db.Sites.Where(x => !x.IsDeleted && !x.IsParsed).Count();
+                model.Finished = false;
+                return model;
+            }
         }
     }
 }

@@ -11,18 +11,22 @@
 {
     @Html.AntiForgeryToken()
 
-    <div class="form-horizontal">
-        <hr />
+<div class="form-horizontal">
+    <hr />
+    <div>
+        Парсер соберает весь текст с сайтов, с которых еще не собирал и сохраняет в базу данных.
+    </div>
+    <br />
+    <div>
+        Найдено не обработанных сайтов: @Html.DisplayFor(model => Model.SitesNotParsed)
+    </div>
+    <br />
+    <div class="form-group">
         <div>
-            Парсер соберает весь текст с сайтов, с которых еще не собирал и сохраняет в базу данных.
-        </div>
-        <br />
-        <div class="form-group">
-            <div>
-                <input type="submit" value="Запустить" class="btn btn-default" />
-            </div>
+            <input type="submit" value="Запустить" class="btn btn-default" />
         </div>
     </div>
+</div>
 }
 <br />
 @if (Model.Finished)
