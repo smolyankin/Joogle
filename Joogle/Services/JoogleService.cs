@@ -47,7 +47,7 @@ namespace Joogle.Services
         {
             using (var db = new JoogleContext())
             {
-                var url = request.Url.Last() == '/' ? request.Url.Remove(request.Url.Length - 1) : request.Url;
+                var url = request.Url.TrimEnd('/');
                 var exist = db.Sites.FirstOrDefault(x => x.Url == url.ToLower());
                 if (exist != null)
                     return;
@@ -82,13 +82,16 @@ namespace Joogle.Services
             using (var db = new JoogleContext())
             {
                 var exist = db.Sites.FirstOrDefault(x => x.Id == site.Id);
-                if (site.IsParsed)
+                if (exist != null)
                 {
-                    var texts = db.Texts.Where(x => x.SiteId == site.Id).ToList();
-                    texts.ForEach(t => t.IsDeleted = site.IsDeleted);
+                    if (site.IsParsed)
+                    {
+                        var texts = db.Texts.Where(x => x.SiteId == site.Id).ToList();
+                        texts.ForEach(t => t.IsDeleted = site.IsDeleted);
+                    }
+                    exist.IsDeleted = site.IsDeleted;
+                    db.SaveChanges();
                 }
-                exist.IsDeleted = site.IsDeleted;
-                db.SaveChanges();
             }
             
         }
@@ -104,12 +107,14 @@ namespace Joogle.Services
                 using (var db = new JoogleContext())
                 {
                     var exist = db.Sites.FirstOrDefault(x => x.Id == site.Id);
-                    var text = db.Texts.FirstOrDefault(x => x.SiteId == exist.Id);
-                    if (text != null)
-                        db.Texts.Remove(text);
                     if (exist != null)
+                    {
+                        var text = db.Texts.FirstOrDefault(x => x.SiteId == exist.Id);
+                        if (text != null)
+                            db.Texts.Remove(text);
                         db.Sites.Remove(exist);
-                    db.SaveChanges();
+                        db.SaveChanges();
+                    }
                 }
             }
             catch { }
@@ -154,7 +159,7 @@ namespace Joogle.Services
                 StringBuilder newTitle = new StringBuilder(string.Empty);
                 var result = new List<char>();
                 var title = text.Title;
-                var startIndex = title.ToLower().IndexOf(search);
+                var startIndex = title.IndexOf(search, StringComparison.OrdinalIgnoreCase);
                 if (startIndex < 0)
                     startIndex++;
                 var endIndex = startIndex + search.Length - 1;
@@ -248,15 +253,17 @@ namespace Joogle.Services
         /// </summary>
         /// <param name="obj">сайт</param>
         /// <returns></returns>
-        private async Task SiteParse(object obj)
+        private async Task SiteParse(Site obj)
         {
             try
             {
                 using (var db = new JoogleContext())
                 {
 
-                    var site = (Site)obj;
+                    var site = obj;
                     var exist = db.Sites.FirstOrDefault(x => x.Id == site.Id);
+                    if (exist == null)
+                        return;
                     var result = new StringBuilder();
                     var config = Configuration.Default.WithDefaultLoader();
                     var task = BrowsingContext.New(config).OpenAsync(site.Url);
